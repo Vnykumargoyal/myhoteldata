@@ -1,0 +1,1 @@
+fbq('track', 'Lead', {currency: "IND", value: 0});
