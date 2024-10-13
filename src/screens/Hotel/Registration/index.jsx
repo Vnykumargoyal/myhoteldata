@@ -17,6 +17,8 @@ import CustomInput from '../../../components/CustomInput';
 import EmailField from '../../../components/EmailField';
 import { isAlphabet, isAlphaNumeric, isNumber, validateEmail } from '../../../helpers/functions';
 import useHotelContext from '../../../hooks/useHotelContext';
+import useCRUD from '../../../hooks/useCRUD';
+import { API_URL } from '../../../api/webServiceUrl';
 
 export default () => {
   const classes = useStyles();
@@ -32,7 +34,11 @@ export default () => {
     mobileNumber: '',
     ownerName: '',
   });
-  const [allowedToContinue, setAllowedToContinue] = useState(false)
+  const [allowedToContinue, setAllowedToContinue] = useState(false);
+  const [registration, registrationResponse,registrationLoading, registrationErr] = useCRUD({
+    type: 'create',
+    url: API_URL.registrationUser,
+  });
 
   const handleLogin = () => {
     router.replace(routes.auth.login);
@@ -41,10 +47,41 @@ export default () => {
   const handleSendOtp = () => {
     updateContext({
       ...values,
-      msgSnackbar: 'Registered successfully.'
-    })
-    router.replace(routes.auth.login);
+      // msgSnackbar: 'Registered successfully.'
+    });
+    if (!registrationLoading) {
+      registration({
+        data: {
+          mobile_number: values.mobileNumber,
+          email: values.email,
+          user_name: values.ownerName,
+        },
+      });
+    }
+    // router.replace(routes.auth.login);
   };
+
+  useEffect(() => {
+    if (registrationResponse) {
+      // setLoading(!mobileVerifyLoading);
+      debugger;
+      if (registrationResponse?.success) {
+        updateContext({
+          ...registrationResponse.data,
+          msgSnackbar: 'Registered successfully.'
+        });
+        router.replace(routes.auth.otp);
+      }
+    }
+  }, [registrationResponse]);
+
+  useEffect(() => {
+    if (registrationErr) {
+      updateContext({
+        msgSnackbar: registrationErr,
+      });
+    }
+  }, [registrationErr]);
 
   const validateMobileNumber = (number) => {
     if (number === '') return true; // Allow empty input (when user clears)
@@ -137,7 +174,9 @@ export default () => {
     }
 
   }, [values, errors]);
-
+  const handleBack = () => {
+    router.replace(routes.auth.statApp);
+  };
   return (
     <Wrapper
       onContinue={handleSendOtp}
@@ -145,6 +184,7 @@ export default () => {
       bottomButtonLabel={CTA_LABELS.REGISTER}
       disableBack
       panelClass={classes.panel}
+      loading={registrationLoading}
       bottomText={(
         <Box mt={2} mb={2}>
           <Typography component="p" className={classes.haveAccount}>
@@ -157,7 +197,7 @@ export default () => {
       )}
     >
       <Box className={classes.cont}>
-        <Header disableBack disableTitle />
+        <Header disableTitle handleClick={handleBack}/>
         <Box ml={2}>
           <Typography component="p" className={classes.heading}>
             {CONSTANTS.REGISTRATION}

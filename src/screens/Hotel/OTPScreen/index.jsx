@@ -18,22 +18,47 @@ import { validateEmail } from '../../../helpers/functions';
 import OTPInput from './component/OTPInput';
 import ResendOTP from '../Authentication/components/ResendOTP';
 import useHotelContext from '../../../hooks/useHotelContext';
+import { API_URL } from '../../../api/webServiceUrl';
+import useCRUD from '../../../hooks/useCRUD';
+import AuthHandler from '../../../utils/AuthHandler';
+import { AUTH_HOTEL_NAME } from '../../../config/auth';
 
 export default () => {
   const classes = useStyles();
   const router = useHistory();
   const [allowedToResend, setAllowedToResend] = useState(false);
+  const { signIn } = AuthHandler;
   const { data, updateContext } = useHotelContext();
   const [otp, setOtp] = useState(new Array(4).fill(""));
   const [allowedToContinue, setAllowedToContinue] = useState(false);
+  const [allowToResentOtp, setAllowToResentOtp] = useState(false);
+  const [validateOTP, validateOTPResponse, validateOTPLoading, validateOTPErr] = useCRUD({
+    type: 'create',
+    url: API_URL.validateOTP,
+  });
+
+  const [resendMobile, resendMobileResponse,resendMobileLoading, resendMobileErr] = useCRUD({
+    type: 'create',
+    url: API_URL.resendSMS,
+  });
+
 
   const handleContinue = () => {
     updateContext({
-      ...otp,
-      msgSnackbar: `
-          You have created account with us, Now you are just few steps away to track your business`
-    })
-    router.replace(routes.auth.hotelLocation);
+      ...otp.join(''),
+      otp: otp.join(''),
+    });
+    if (!validateOTPLoading) {
+      validateOTP({
+        data: {
+          email: data?.email,
+          otp: otp.join(''),
+          email_verification_otp: true
+        },
+      });
+    }
+   
+    // router.replace(routes.auth.hotelLocation);
   };
 
   useEffect(() => {
@@ -43,8 +68,60 @@ export default () => {
     } else {
       setAllowedToContinue(false);
     }
-
   }, [otp]);
+
+  useEffect(() => {
+    if (validateOTPResponse) {
+      // setLoading(!mobileVerifyLoading);
+      debugger;
+      if (validateOTPResponse?.success) {
+        updateContext({
+          ...validateOTPResponse.data,
+          msgSnackbar: `
+          You have created account with us, Now you are just few steps away to track your business`
+        });
+        signIn(AUTH_HOTEL_NAME, validateOTPResponse.data);
+        router.replace(routes.auth.hotelLocation);
+      }
+    }
+  }, [validateOTPResponse]);
+
+  const handleBack = () => {
+    router.replace(routes.auth.login);
+  };
+
+  useEffect(() => {
+    if (resendMobileResponse) {
+      // setLoading(!mobileVerifyLoading);
+      debugger;
+      if (resendMobileResponse?.success) {
+        updateContext({
+          ...resendMobileResponse.data,
+        });
+        // router.replace(routes.auth.hotelLocation);
+      }
+    }
+  }, [resendMobileResponse]);
+
+  const handleResendOtpContinue = () => {
+    if (!resendMobileLoading) {
+      resendMobile({
+        data: {
+          email: data?.email,
+          resend_flag: true
+        },
+      });
+    }
+  }
+
+  useEffect(() => {
+    if (validateOTPErr || resendMobileErr) {
+      updateContext({
+        msgSnackbar: validateOTPErr || resendMobileErr,
+      });
+    }
+  }, [validateOTPErr || resendMobileErr]);
+
   console.log('otp', otp);
   return (
     <Wrapper
@@ -54,9 +131,10 @@ export default () => {
       panelClass={classes.panel}
       onContinue={handleContinue}
       bottomButtonLabel={CTA_LABELS.VALIDATE_OTP}
+      loading={validateOTPLoading || resendMobileLoading}
     >
       <Container className={classes.cont}>
-        {/* <Header disableTitle /> */}
+        <Header disableTitle handleClick={handleBack}/>
         <Box mt={4}>
           <Typography component="p" className={classes.heading}>
             {CONSTANTS.VERIFY_EMAIL}
@@ -79,8 +157,8 @@ export default () => {
             otpEnterIn
             allowedToResend={allowedToResend}
             setAllowedToResend={setAllowedToResend}
-            // setAllowToResentOtp={setAllowToResentOtp}
-            // handleResendOtpContinue={handleResendOtpContinue}
+            setAllowToResentOtp={setAllowToResentOtp}
+            handleResendOtpContinue={handleResendOtpContinue}
             classOTP={classes.classOTP}
           />
         </Box>

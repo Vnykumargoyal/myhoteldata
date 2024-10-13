@@ -28,6 +28,7 @@ const post = (options) => {
     url,
     data = {},
     timeout,
+    params = {},
     multipart = false,
     formData,
     headers,
@@ -37,11 +38,14 @@ const post = (options) => {
     timeout: timeout || DEFAULT_TIMEOUT,
     method: 'post',
     data,
+    params
   };
 
   if (token) {
     serverOptions.headers = {
       Authorization: `Bearer ${token}`,
+      abc: '@@###123',
+
     };
   }
   if (headers) {

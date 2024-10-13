@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Container, IconButton, Typography } from '@material-ui/core';
 import queryString from 'query-string';
-import { get } from 'lodash';
+import { get, method } from 'lodash';
 import { useHistory } from 'react-router-dom';
 import useStyles from './style';
 import Wrapper from '../../../wiredComponents/Wrapper';
@@ -14,21 +14,37 @@ import { CONSTANTS, CTA_LABELS, INPUT_CONSTANTS } from '../../../constants';
 import { routes } from '../../../routes/constant';
 import CustomInput from '../../../components/CustomInput';
 import EmailField from '../../../components/EmailField';
-import { isAddress, isAlphabet, isAlphaNumeric, isNumber, validateEmail } from '../../../helpers/functions';
+import { isAddress, isAlphabet, isAlphaNumeric, isNumber, toTitleCase, validateEmail } from '../../../helpers/functions';
 import useHotelContext from '../../../hooks/useHotelContext';
+import { API_URL } from '../../../api/webServiceUrl';
+import useCRUD from '../../../hooks/useCRUD';
+import AuthHandler from '../../../utils/AuthHandler';
 
 export default () => {
   const classes = useStyles();
   const router = useHistory();
   const [allowedToContinue, setAllowedToContinue] = useState(false);
   const { data, updateContext } = useHotelContext();
+  // const pincode = data?.hotelLocation?.match(/\b\d\b/);
   const [values, setValues] = useState({
-    hotelName: '',
-    hotelAddress: '',
+    hotelName: data?.hotelName || '',
+    hotelAddress: data?.hotelLocation || '',
     pincode: '',
     city: '',
     state: ''
   });
+  
+  const [hotelDetail, hotelDetailResponse, hotelDetailLoading, hotelDetailErr] = useCRUD({
+    type: 'create',
+    url: API_URL.hotelDetail,
+  });
+  // const [pincode, pincodeResponse, pincodeLoading, pincodeErr] = useCRUD({
+  //   type: 'create',
+  //   url: `${API_URL.pincode}/${values.pincode}`,
+  // });
+
+  // console.log(data, pincode);
+  
   const [errors, setErrors] = useState({
     hotelName: '',
     hotelAddress: '',
@@ -36,13 +52,89 @@ export default () => {
     city: '',
     state: ''
   });
-  const handleContinue = () => {
-    updateContext({
-      ...values,
-      msgSnackbar: 'Your hotel added successfully.'
+
+  const fetchAddress = () => {
+    // Combine the name and country in the 'q' parameter
+    // const query = `${name} Hotel India`;
+    const getToken = () => AuthHandler.authCheck()?.access_token || data.access_token;
+    console.log('@@##', getToken(), data.email);
+    fetch(`http://localhost:8087/hotel/v1/pincode/110017`, 
+      {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getToken()}`,  // Replace with actual token if needed
+        'Content-Type': 'application/json',
+        'email': data.email,  // Example of another custom header
+      }
     })
-    router.replace(routes.hotel.addDetails);
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('@@@', data);
+      })
+      .catch((error) => {
+        updateContext({
+          msgSnackbar: `Error: ${error.message}`,
+        });
+      });
   };
+  const handleContinue = () => {
+    // updateContext({
+    //   ...values,
+    //   msgSnackbar: 'Your hotel added successfully.'
+    // })
+    // router.replace(routes.hotel.addDetails);
+    if (!hotelDetailLoading) {
+      hotelDetail({
+        data: {
+          pincode: values.pincode,
+          city: values.city,
+          state: values.state,
+          hotel_name: values.hotelName,
+          landmark: values.hotelAddress
+        },
+        headers: {
+          email: data.email,
+        }
+      })
+    }
+  };
+  const handleBack = () => {
+    router.replace(routes.auth.hotelLocation);
+  };
+
+  // useEffect(() => {
+  //   if (pincodeResponse) {
+  //     // setLoading(!mobileVerifyLoading);
+  //     debugger;
+  //     if (pincodeResponse?.success) {
+  //       updateContext({
+  //         ...pincodeResponse.data,
+  //         // msgSnackbar: ' successfully.'
+  //       });
+  //       setValues((prev) => ({ 
+  //         ...prev, 
+  //         city: '',
+  //         state: '',
+  //       }));
+  //       // router.replace(routes.auth.otp);
+  //     }
+  //   }
+  // }, [pincodeResponse]);
+
+  useEffect(() => {
+    if (hotelDetailResponse) {
+      // setLoading(!mobileVerifyLoading);
+      debugger;
+      if (hotelDetailResponse?.success) {
+        updateContext({
+          ...hotelDetailResponse.data,
+           msgSnackbar: 'Your hotel added successfully.'
+        });
+        router.replace(routes.hotel.addDetails);
+        // router.replace(routes.auth.otp);
+      }
+    }
+  }, [hotelDetailResponse]);
 
   const handleInputChange = (e, val, error) => {
     const {
@@ -81,6 +173,15 @@ export default () => {
     }
   };
 
+  useEffect(() => {
+    if (data?.hotelName) {
+      setValues((prev) => ({ ...prev, hotelName: toTitleCase(data?.hotelName) }));
+    }
+    if (data?.hotelLocation) {
+      setValues((prev) => ({ ...prev, hotelAddress: data?.hotelLocation }));
+    }
+  }, [data]);
+
   const handleBlur = (e, error) => {
     const {
       // prettier-ignore
@@ -101,6 +202,18 @@ export default () => {
     } else if (name === 'state' && !value.length) {
       setErrors((prev) => ({ ...prev, state: 'Enter state' }));
     }
+    if (values.pincode.length === 6) {
+      // pincode({
+      //   data: {
+      //     email: data.email,
+      //     otp: data.otp,
+      //   },
+      //   headers: {
+      //     email: data.email,
+      //   }
+      // });
+      fetchAddress();
+    }
   };
 
   useEffect(() => {
@@ -119,8 +232,8 @@ export default () => {
     } else {
       setAllowedToContinue(false);
     }
-
   }, [values, errors]);
+
   return (
     <Wrapper
       showContinue
@@ -129,10 +242,11 @@ export default () => {
       panelClass={classes.panel}
       onContinue={handleContinue}
       bottomButtonLabel={CTA_LABELS.SAVE_PROCEED}
+      loading={hotelDetailLoading}
     >
       <Container className={classes.cont}>
-        {/* <Header disableTitle /> */}
-        <Box mt={4}>
+        <Header disableTitle handleClick={handleBack} />
+        <Box mt={2}>
           <Typography component="p" className={classes.heading}>
             {CONSTANTS.ENTER_HOTEL_ADDRESS}
           </Typography>

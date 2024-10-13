@@ -17,14 +17,16 @@ import EmailField from '../../../components/EmailField';
 import { isAlphabet, isAlphaNumeric, validateEmail } from '../../../helpers/functions';
 import { API_URL } from '../../../api/webServiceUrl';
 import useCRUD from '../../../hooks/useCRUD';
+import useHotelContext from '../../../hooks/useHotelContext';
 
 export default () => {
   const classes = useStyles();
   const router = useHistory();
   const [allowedToContinue, setAllowedToContinue] = useState(false);
+  const { data, updateContext } = useHotelContext();
   const [values, setValues] = useState({
-    hotelName: '',
-    hotelLocation: ''
+    hotelName: data?.hotelName ||  '',
+    hotelLocation: data?.hotelLocation || ''
   });
   const [errors, setErrors] = useState({
     hotelName: '',
@@ -56,24 +58,38 @@ export default () => {
     }
   }, [debouncedHotelName]);
 
+  let country = "India";
+  // const name = "Hilton"; 
   const fetchAddress = (name) => {
-    fetch(`https://nominatim.openstreetmap.org/search?q=${name}+Hotel&format=json`)
+    // Combine the name and country in the 'q' parameter
+    const query = `${name} Hotel India`;
+  
+    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json`)
       .then((response) => response.json())
       .then((data) => {
         if (data.length > 0) {
           console.log(data[0].display_name);  // Get the address of the first result
-          setValues((prev) => ({ ...prev, 'hotelLocation':  data[0].display_name}));
+          setValues((prev) => ({ ...prev, 'hotelLocation': data[0].display_name }));
           console.log(`Latitude: ${data[0].lat}, Longitude: ${data[0].lon}`);
         } else {
-          console.log('No results found');
+          updateContext({
+            msgSnackbar: 'No data found',
+          });
         }
       })
-      .catch((error) => console.error('Error:', error));
+      .catch((error) => {
+        updateContext({
+          msgSnackbar: `Error: ${error.message}`,
+        });
+      });
   };
 
 
   const handleContinue = () => {
     router.replace(routes.auth.hotelAddress);
+    updateContext({
+      ...values,
+    })
   };
 
   const handleInputChange = (e, val, error) => {
@@ -157,15 +173,17 @@ export default () => {
             name={INPUT_CONSTANTS.ENTER_HOTEL_NAME}
             handleBlur={handleBlur}
             handleChange={handleInputChange}
+            lowerStyle={false}
           />
           <CustomInput 
             label={INPUT_CONSTANTS.SEARCH_HOTEL_LOCATION_LABEL}
             value={values.hotelLocation}
             maxLength="10"
-            error={errors.hotelLocation}
+            // error={errors.hotelLocation}
             name={INPUT_CONSTANTS.HOTEL_LOCATION_NAME}
-            handleBlur={handleBlur}
+            // handleBlur={handleBlur}
             handleChange={handleInputChange}
+            disabled
           />
         </Box>
         

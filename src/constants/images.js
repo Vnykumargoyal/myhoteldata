@@ -1,6 +1,6 @@
 const IMAGE_URLS = {
   ICONS: {
-    BACK_BUTTON: 'assets/icons/back-button.svg',
+    BACK_BUTTON: 'assets/icons/back-icon.svg',
     EDIT: 'assets/icons/edit.svg',
     LEFT_ARROWS: 'assets/icons/right-arrows.svg',
     RIGHT_ARROWS: 'assets/icons/left-arrows.svg',

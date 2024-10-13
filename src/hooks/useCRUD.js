@@ -193,7 +193,7 @@ export default function useCRUD({
   /* Function to make read request to server for type CREATE */
 
   op.create = useCallback(
-    async ({ data, token, headers }) => {
+    async ({ data, token, headers, params }) => {
       setLoading(true);
       const apiResponse = await post({
         token: token || getToken(),
@@ -201,6 +201,7 @@ export default function useCRUD({
         data,
         timeout,
         headers,
+        params,
       }).catch((e) => handleErrors(e, true));
       if (apiResponse && apiResponse?.data) setResponse(apiResponse.data);
       handleErrors(apiResponse);

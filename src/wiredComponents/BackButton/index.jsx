@@ -9,13 +9,11 @@ import ConditionalRender from '../../components/ConditionalRender';
 import IMAGE_URLS from '../../constants/images';
 import { WORKFLOW } from '../../routes/workflowstates';
 
-const BackButton = ({ disableBack, previousWorkflowState }) => {
+const BackButton = ({ disableBack, handleClick }) => {
   const router = useHistory();
-  const handleClick = () => {
-    if (previousWorkflowState > '-1') {
-      router.replace(WORKFLOW[previousWorkflowState].path);
-    }
-  };
+  // const handleClick = () => {
+
+  // };
   return (
     <ConditionalRender
       condition={!disableBack}

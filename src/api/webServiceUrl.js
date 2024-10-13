@@ -12,12 +12,12 @@ const AuthURL = (endpoint) => {
   return AUTH_SERVICE + endpoint;
 };
 
-const LOSURL = (endpoint) => LOS_SERVICE + endpoint;
+// const LOSURL = (endpoint) => LOS_SERVICE + endpoint;
 
 const ConfigURL = (endpoint) => {
   // eslint-disable-next-line no-param-reassign
   endpoint = endpoint.toLowerCase();
-  return BASE_URL + endpoint;
+  return LOS_SERVICE + endpoint;
 };
 
 const PayLaterURL = (endpoint, isLocal) => {
@@ -47,17 +47,21 @@ const UtilityURL = (endpoint, isLocal) => {
 const API_URL = {
   // hotelAddressAPI: `https://nominatim.openstreetmap.org/search?q=${hotel}+Hotel&format=json`,
   sendSMS: AuthURL('send-otp'),
+  registrationUser: AuthURL('registration'),
   validateOTP: AuthURL('validate-otp'),
-  saveEvent: UtilityURL('saveEvent'),
-  validateEmail: UtilityURL('validateEmail'),
-  fetchActive: LOSURL(`fetch?loanProduct=${TL}`),
-  fetchEligibilityForTermLoan: BASEIURL(`fetch_eligibility?loanProduct=${TL}`),
-  refreshToken: `${AUTH_SERVICE}refresh-access-token`,
-  getConfigMaster: ConfigURL('term_loan/get_config_master'),
-  maskAadhar: ConfigURL('v1/aadhar/mask'),
+  resendSMS: AuthURL('send-otp'),
+  pincode: ConfigURL('pincode'),
+  hotelDetail: ConfigURL('hotel-details'),
+  validateEmail: ConfigURL('validateEmail'),
+
+  // fetchActive: LOSURL(`fetch?loanProduct=${TL}`),
+  // fetchEligibilityForTermLoan: BASEIURL(`fetch_eligibility?loanProduct=${TL}`),
+  // refreshToken: `${AUTH_SERVICE}refresh-access-token`,
+  // getConfigMaster: ConfigURL('term_loan/get_config_master'),
+  // maskAadhar: ConfigURL('v1/aadhar/mask'),
   // gstDetails: CGIDURL('gstDetails'),
-  customerJourney: BASEIURL('cjp/create'),
-  fetchRedirectionUrl: PayLaterURL('fetch-redirection-url'),
+  // customerJourney: BASEIURL('cjp/create'),
+  // fetchRedirectionUrl: PayLaterURL('fetch-redirection-url'),
 };
 
 export {

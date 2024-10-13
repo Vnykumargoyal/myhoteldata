@@ -135,13 +135,13 @@ const HotelInfoRoutes = () => {
       const currentDate = moment(new Date());
       const expDate = moment(new Date(getBase64Value.exp * 1000));
       // // force logout if jwt exp time is less than now()
-      if (expDate.valueOf() < new Date().valueOf()) {
-        router?.replace(routes.auth.logout);
-      }
+      // if (expDate.valueOf() < new Date().valueOf()) {
+      //   router?.replace(routes.auth.logout);
+      // }
       const expiresInMin = expDate.diff(currentDate, 'minutes');
       if (getBase64Value && expiresInMin < AUTH_HOTEL_CALL_JWT_MINUTES) {
         // eslint-disable-next-line no-unused-expressions
-        prolongationJWT('checkAuth')();
+        // prolongationJWT('checkAuth')();
       }
     }
   };
@@ -182,19 +182,19 @@ const HotelInfoRoutes = () => {
           component={OTPScreen}
           // component={AmberBankStateMent}
         />
-        <Route
+        <ProtectedRoutes
           exact
           path={routes.auth.hotelLocation}
           component={HotelLocation}
           // component={AmberBankStateMent}
         />
-        <Route
+        <ProtectedRoutes
           exact
           path={routes.auth.hotelAddress}
           component={AddHotelAddress}
           // component={AmberBankStateMent}
         />
-        <Route
+        <ProtectedRoutes
           exact
           path={routes.hotel.addDetails}
           component={AddHotelDetails}

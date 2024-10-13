@@ -32,8 +32,8 @@ const Header = ({
         <Box className="left-section">
           <BackButton
             disableBack={disableBack}
-            previousWorkflowState={stage?.previousStageId}
-            // handleClick={handleClick}
+            // previousWorkflowState={stage?.previousStageId}
+            handleClick={handleClick}
           />
         </Box>
       </Hidden>

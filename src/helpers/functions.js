@@ -321,6 +321,10 @@ const base64toBlob = (base64Data, fileName) => {
   return new File([blob], fileName, options);
 };
 
+const toTitleCase = (word) => {
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+}
+
 export {
   formatPrice,
   panValidateWithForthLetterP,
@@ -367,5 +371,6 @@ export {
   pushClevertapUserLogin,
   base64toBlob,
   renderParsedHTML,
-  getLenderName
+  getLenderName,
+  toTitleCase,
 };

@@ -16,6 +16,8 @@ import CustomInput from '../../../components/CustomInput';
 import EmailField from '../../../components/EmailField';
 import { validateEmail } from '../../../helpers/functions';
 import useHotelContext from '../../../hooks/useHotelContext';
+import { API_URL } from '../../../api/webServiceUrl';
+import useCRUD from '../../../hooks/useCRUD';
 
 export default () => {
   const classes = useStyles();
@@ -29,17 +31,54 @@ export default () => {
     email: '',
     password: '',
   });
-  const [allowedToContinue, setAllowedToContinue] = useState(false)
+  const [allowedToContinue, setAllowedToContinue] = useState(false);
+  const [verifyMobile, mobileResponse, mobileVerifyLoading, verifyMobileErr] = useCRUD({
+    type: 'create',
+    url: API_URL.sendSMS,
+  });
+
+  const handleBack = () => {
+    router.replace(routes.auth.statApp);
+  };
 
   const handleLogin = () => {
     updateContext({
       ...values,
     })
-    router.replace(routes.auth.otp);
+    if (!mobileVerifyLoading) {
+      verifyMobile({
+        data: {
+          email: values.email,
+          resend_flag: false
+        },
+      });
+    }
+    // router.replace(routes.auth.otp);
   };
   const handleRegistration = () => {
     router.replace(routes.auth.registration);
   };
+
+  useEffect(() => {
+    if (mobileResponse) {
+      // setLoading(!mobileVerifyLoading);
+      debugger;
+      if (mobileResponse?.success) {
+        updateContext({
+          ...mobileResponse.data,
+        });
+        router.replace(routes.auth.otp);
+      }
+    }
+  }, [mobileResponse]);
+
+  useEffect(() => {
+    if (verifyMobileErr) {
+      updateContext({
+        msgSnackbar: verifyMobileErr,
+      });
+    }
+  }, [verifyMobileErr]);
 
   const handleInputChange = (e, val, error) => {
     const {
@@ -123,6 +162,7 @@ export default () => {
       bottomButtonLabel={CTA_LABELS.LOGIN}
       disableBack
       panelClass={classes.panel}
+      loading={mobileVerifyLoading}
       bottomText={(
         <Box mt={2} mb={2}>
           <Typography component="p" className={classes.haveAccount}>
@@ -135,7 +175,7 @@ export default () => {
       )}
     >
       <Box className={classes.cont}>
-        <Header disableBack disableTitle />
+        <Header disableTitle handleClick={handleBack} />
         <Box ml={2}>
           <Typography component="p" className={classes.heading}>
             {CONSTANTS.LOGIN}
